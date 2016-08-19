@@ -15,6 +15,13 @@ describe 'foreman_proxy::config' do
         shell = '/usr/bin/false'
         usr_dir = '/usr/local'
         var_dir = '/var/puppet'
+      when 'Archlinux'
+        etc_dir = '/etc'
+        home_dir = '/usr/share/foreman-proxy'
+        proxy_user_name = 'foreman-proxy'
+        shell = '/usr/bin/false'
+        usr_dir = '/usr'
+        var_dir = '/etc/puppetlabs/puppet'
       else
         etc_dir = '/etc'
         home_dir = '/usr/share/foreman-proxy'
@@ -23,6 +30,7 @@ describe 'foreman_proxy::config' do
         usr_dir = '/usr'
         var_dir = '/var/lib/puppet'
       end
+      puppet_etc_dir = facts[:osfamily] == 'Archlinux' ? var_dir : "#{etc_dir}/puppet"
 
       if (facts[:puppetversion].to_i >2)
         puppetca_command = "#{usr_dir}/bin/puppet cert *"
@@ -188,7 +196,7 @@ describe 'foreman_proxy::config' do
         it 'should generate correct puppet_proxy_legacy.yml' do
           verify_exact_contents(catalogue, "#{etc_dir}/foreman-proxy/settings.d/puppet_proxy_legacy.yml", [
             '---',
-            ":puppet_conf: #{etc_dir}/puppet/puppet.conf",
+            ":puppet_conf: #{puppet_etc_dir}/puppet.conf",
             ":puppet_url: https://#{facts[:fqdn]}:8140",
             ":puppet_ssl_ca: #{var_dir}/ssl/certs/ca.pem",
             ":puppet_ssl_cert: #{var_dir}/ssl/certs/#{facts[:fqdn]}.pem",
@@ -243,7 +251,7 @@ describe 'foreman_proxy::config' do
             '---',
             ':enabled: https',
             ":ssldir: #{var_dir}/ssl",
-            ":puppetdir: #{etc_dir}/puppet",
+            ":puppetdir: #{puppet_etc_dir}",
           ])
         end
 
@@ -257,6 +265,8 @@ describe 'foreman_proxy::config' do
                       end
                     when 'FreeBSD', 'DragonFly'
                       '/tftpboot'
+                    when 'Archlinux'
+                      '/srv/tftp'
                     else
                       '/var/lib/tftpboot'
                     end
@@ -1001,6 +1011,10 @@ describe 'foreman_proxy::config' do
           dhcp_interface = 'lo'
           dhcp_leases    = '/var/lib/dhcp/dhcpd.leases'
           dhcp_config    = "#{etc_dir}/dhcp/dhcpd.conf"
+        when 'Archlinux'
+          dhcp_interface = 'lo'
+          dhcp_leases    = '/var/lib/dhcp/dhcpd.leases'
+          dhcp_config    = "#{etc_dir}/dhcpd.conf"
         else
           dhcp_interface = 'lo'
           dhcp_leases    = '/var/lib/dhcpd/dhcpd.leases'
